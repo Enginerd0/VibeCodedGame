@@ -531,6 +531,7 @@
                 walkTime: 0,
                 isWalking: false,
                 weapon: null,
+                equippedWeapon: null,
                 isAttacking: false
             };
 
@@ -579,7 +580,7 @@
                 const headGeometry = new THREE.BoxGeometry(0.4, 0.15, 0.5);
                 const headMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 });
                 const head = new THREE.Mesh(headGeometry, headMaterial);
-                head.position.y = 0.8;
+                head.position.y = 0.675; // Position to touch the top of the handle
                 group.add(head);
 
                 // Axe handle
@@ -741,7 +742,26 @@
             });
 
             socket.on('weaponEquipped', (data) => {
-                // Could add visual feedback here
+                // Update visual weapon display
+                let playerMesh;
+                if (data.playerId === socket.id) {
+                    playerMesh = localPlayer;
+                } else {
+                    playerMesh = players[data.playerId];
+                }
+                if (playerMesh) {
+                    // Remove existing weapon if any
+                    if (playerMesh.userData.equippedWeapon) {
+                        playerMesh.userData.rightArm.remove(playerMesh.userData.equippedWeapon);
+                    }
+                    // Add new weapon
+                    const weaponMesh = createWeaponMesh(data.weaponType);
+                    // Position weapon in hand (adjust for sword handle at bottom of arm)
+                    weaponMesh.position.set(0, -0.15, 0.1);
+                    weaponMesh.rotation.z = -Math.PI / 2; // Rotate to hold horizontally in correct direction
+                    playerMesh.userData.rightArm.add(weaponMesh);
+                    playerMesh.userData.equippedWeapon = weaponMesh;
+                }
             });
 
             socket.on('playerAttacked', (data) => {
@@ -757,10 +777,21 @@
                     health = 100;
                     updateHealthDisplay();
 
+                    // Remove equipped weapon on respawn
+                    if (localPlayer.userData.equippedWeapon) {
+                        localPlayer.userData.rightArm.remove(localPlayer.userData.equippedWeapon);
+                        localPlayer.userData.equippedWeapon = null;
+                    }
+
                     // Show respawn message
                     showRespawnMessage();
                 } else if (players[data.playerId]) {
                     players[data.playerId].position.set(data.x, data.y, data.z);
+                    // Remove equipped weapon on respawn
+                    if (players[data.playerId].userData.equippedWeapon) {
+                        players[data.playerId].userData.rightArm.remove(players[data.playerId].userData.equippedWeapon);
+                        players[data.playerId].userData.equippedWeapon = null;
+                    }
                 }
             });
         }
