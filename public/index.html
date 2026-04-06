@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medieval Multiplayer Game</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r163/three.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const username = 'Player';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x87CEEB); // Sky blue
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 5, 10);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(10, 10, 5);
+        scene.add(directionalLight);
+
+        // Basic ground
+        const groundGeometry = new THREE.PlaneGeometry(100, 100);
+        const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.rotation.x = -Math.PI / 2;
+        scene.add(ground);
+
+        // Medieval assets
+        // Castle
+        const castleGeometry = new THREE.BoxGeometry(10, 8, 10);
+        const castleMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+        const castle = new THREE.Mesh(castleGeometry, castleMaterial);
+        castle.position.set(0, 4, -20);
+        scene.add(castle);
+
+        // Castle towers
+        const towerGeometry = new THREE.CylinderGeometry(1, 1, 10, 8);
+        const towerMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 });
+        const tower1 = new THREE.Mesh(towerGeometry, towerMaterial);
+        tower1.position.set(-4, 5, -20);
+        scene.add(tower1);
+
+        const tower2 = tower1.clone();
+        tower2.position.set(4, 5, -20);
+        scene.add(tower2);
+
+        // Some trees
+        const treeGeometry = new THREE.CylinderGeometry(0.5, 0.5, 5, 8);
+        const treeMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+        const leavesGeometry = new THREE.SphereGeometry(2, 8, 6);
+        const leavesMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+        const trees = [];
+
+        for (let i = 0; i < 10; i++) {
+            const tree = new THREE.Mesh(treeGeometry, treeMaterial);
+            tree.position.set(Math.random() * 50 - 25, 2.5, Math.random() * 50 - 25);
+            scene.add(tree);
+
+            const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+            leaves.position.set(tree.position.x, tree.position.y + 3, tree.position.z);
+            scene.add(leaves);
+
+            trees.push({ trunk: tree, leaves: leaves, hits: Math.floor(Math.random() * 2) + 2 }); // 2 or 3 hits
+        }
+
+        // Player objects
+        const players = {};
+        let localPlayer;
+
+        // Create Minecraft-style player
+        function createHumanoidPlayer(isLocal = false) {
+            const group = new THREE.Group();
+
+            // Body
+            const bodyGeometry = new THREE.BoxGeometry(0.6, 1.2, 0.3);
+            const bodyMaterial = new THREE.MeshLambertMaterial({ color: isLocal ? 0x8B4513 : 0x228B22 });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.position.y = 0.6;
+            group.add(body);
+
+            // Head
+            const headGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+            const headMaterial = new THREE.MeshLambertMaterial({ color: 0xf5dab1 });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            head.position.y = 1.45;
+            group.add(head);
+
+            // Arms
+            const armGeometry = new THREE.BoxGeometry(0.3, 0.7, 0.3);
+            const armMaterial = new THREE.MeshLambertMaterial({ color: 0xf5dab1 });
+            const leftArm = new THREE.Mesh(armGeometry, armMaterial);
+            leftArm.position.set(-0.45, 0.9, 0);
+            group.add(leftArm);
+
+            const rightArm = new THREE.Mesh(armGeometry, armMaterial);
+            rightArm.position.set(0.45, 0.9, 0);
+            group.add(rightArm);
+
+            // Legs
+            const legGeometry = new THREE.BoxGeometry(0.3, 1.2, 0.3);
+            const legMaterial = new THREE.MeshLambertMaterial({ color: 0x000080 });
+            const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
+            leftLeg.position.set(-0.15, -0.6, 0);
+            group.add(leftLeg);
+
+            const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
+            rightLeg.position.set(0.15, -0.6, 0);
+            group.add(rightLeg);
+
+            // Store limbs for animation
+            group.userData.leftArm = leftArm;
+            group.userData.rightArm = rightArm;
+            group.userData.leftLeg = leftLeg;
+            group.userData.rightLeg = rightLeg;
+            group.userData.weapon = null;
+            group.userData.walking = false;
+
+            return group;
+        }
+
+        // Create weapon mesh
+        function createWeaponMesh(type) {
+            const group = new THREE.Group();
+            if (type === 'sword') {
+                const blade = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1, 0.05), new THREE.MeshLambertMaterial({ color: 0xC0C0C0 }));
+                blade.position.y = 0.5;
+                group.add(blade);
+                const handle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.05), new THREE.MeshLambertMaterial({ color: 0x8B4513 }));
+                handle.position.y = -0.15;
+                group.add(handle);
+            } else if (type === 'axe') {
+                const head = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.3), new THREE.MeshLambertMaterial({ color: 0x696969 }));
+                head.position.y = 0.5;
+                group.add(head);
+                const handle = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.8, 0.05), new THREE.MeshLambertMaterial({ color: 0x8B4513 }));
+                handle.position.y = 0;
+                group.add(handle);
+            }
+            group.userData.type = type;
+            return group;
+        }
+
+        // Collectibles (gold coins)
+        const collectibleGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.1, 8);
+        const collectibleMaterial = new THREE.MeshLambertMaterial({ color: 0xFFD700 });
+        const collectibles = [];
+
+        for (let i = 0; i < 20; i++) {
+            const collectible = new THREE.Mesh(collectibleGeometry, collectibleMaterial);
+            collectible.position.set(Math.random() * 40 - 20, 1, Math.random() * 40 - 20);
+            collectibles.push(collectible);
+            scene.add(collectible);
+        }
+
+        // Potions (speed boost)
+        const potionGroup = new THREE.Group();
+        // Bottle
+        const bottleGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.8, 8);
+        const bottleMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 }); // brown
+        const bottle = new THREE.Mesh(bottleGeometry, bottleMaterial);
+        potionGroup.add(bottle);
+        // Liquid
+        const liquidGeometry = new THREE.CylinderGeometry(0.15, 0.15, 0.6, 8);
+        const liquidMaterial = new THREE.MeshLambertMaterial({ color: 0x00FF00 });
+        const liquid = new THREE.Mesh(liquidGeometry, liquidMaterial);
+        liquid.position.y = 0.1;
+        potionGroup.add(liquid);
+        // Cork
+        const corkGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.1, 6);
+        const corkMaterial = new THREE.MeshLambertMaterial({ color: 0x654321 });
+        const cork = new THREE.Mesh(corkGeometry, corkMaterial);
+        cork.position.y = 0.45;
+        potionGroup.add(cork);
+
+        const potions = [];
+
+        for (let i = 0; i < 5; i++) {
+            const potion = potionGroup.clone();
+            potion.position.set(Math.random() * 40 - 20, 1, Math.random() * 40 - 20);
+            potions.push(potion);
+            scene.add(potion);
+        }
+
+        // Weapons
+        const weapons = [];
+        for (let i = 0; i < 10; i++) {
+            const type = i % 2 === 0 ? 'sword' : 'axe';
+            const mesh = createWeaponMesh(type);
+            mesh.position.set(Math.random() * 40 - 20, 1, Math.random() * 40 - 20);
+            weapons.push({ mesh, type, collected: false });
+            scene.add(mesh);
+        }
+
+        // Score
+        let score = 0;
+        let wood = 0;
+        let speedBoost = false;
+        let speedBoostEndTime = 0;
+        const scoreElement = document.createElement('div');
+        scoreElement.style.position = 'absolute';
+        scoreElement.style.top = '10px';
+        scoreElement.style.left = '10px';
+        scoreElement.style.color = 'white';
+        scoreElement.style.fontSize = '24px';
+        scoreElement.innerHTML = 'Gold: 0';
+        document.body.appendChild(scoreElement);
+
+        // Wood display
+        const woodElement = document.createElement('div');
+        woodElement.style.position = 'absolute';
+        woodElement.style.top = '40px';
+        woodElement.style.left = '10px';
+        woodElement.style.color = 'white';
+        woodElement.style.fontSize = '24px';
+        woodElement.innerHTML = 'Wood: 0';
+        document.body.appendChild(woodElement);
+
+        // Health bar
+        let health = 100;
+        const healthBar = document.createElement('div');
+        healthBar.style.position = 'absolute';
+        healthBar.style.top = '10px';
+        healthBar.style.right = '10px';
+        healthBar.style.width = '200px';
+        healthBar.style.height = '20px';
+        healthBar.style.backgroundColor = 'red';
+        healthBar.style.border = '2px solid white';
+        const healthFill = document.createElement('div');
+        healthFill.style.width = '100%';
+        healthFill.style.height = '100%';
+        healthFill.style.backgroundColor = 'green';
+        healthBar.appendChild(healthFill);
+        document.body.appendChild(healthBar);
+
+        // Toolbar
+        const toolbar = document.createElement('div');
+        toolbar.style.position = 'absolute';
+        toolbar.style.bottom = '10px';
+        toolbar.style.left = '50%';
+        toolbar.style.transform = 'translateX(-50%)';
+        toolbar.style.display = 'flex';
+        toolbar.style.gap = '5px';
+        const slots = [];
+        for (let i = 0; i < 5; i++) {
+            const slot = document.createElement('div');
+            slot.style.width = '50px';
+            slot.style.height = '50px';
+            slot.style.backgroundColor = 'rgba(0,0,0,0.5)';
+            slot.style.border = '2px solid white';
+            slot.style.display = 'flex';
+            slot.style.alignItems = 'center';
+            slot.style.justifyContent = 'center';
+            slot.style.color = 'white';
+            slot.style.fontSize = '12px';
+            slot.innerHTML = '';
+            toolbar.appendChild(slot);
+            slots.push(slot);
+        }
+        document.body.appendChild(toolbar);
+
+        // Inventory
+        let inventory = [];
+        let backWeapon = null;
+
+        function equipWeapon(slot) {
+            if (inventory[slot] && localPlayer) {
+                // Remove current weapon
+                if (localPlayer.userData.weapon) {
+                    localPlayer.userData.rightArm.remove(localPlayer.userData.weapon);
+                }
+                // If equipping the back weapon, remove from back
+                if (backWeapon && inventory[slot] === backWeapon.userData.type) {
+                    localPlayer.remove(backWeapon);
+                    backWeapon = null;
+                }
+                // Equip new
+                const weaponMesh = createWeaponMesh(inventory[slot]);
+                weaponMesh.position.set(0, -0.35, 0.3);
+                localPlayer.userData.rightArm.add(weaponMesh);
+                localPlayer.userData.weapon = weaponMesh;
+                weaponMesh.rotation.x = -Math.PI / 2;
+                // Counteract rotation
+                if (localPlayer.userData.walking) {
+                    weaponMesh.rotation.x = -Math.PI / 2 - localPlayer.userData.rightArm.rotation.x;
+                }
+            }
+        }
+
+        // Controls
+        const keys = {};
+        let mouseX = 0;
+        let cameraYaw = 0;
+        let isMouseDown = false;
+
+        document.addEventListener('keydown', (event) => {
+            keys[event.code] = true;
+        });
+        document.addEventListener('keyup', (event) => {
+            keys[event.code] = false;
+        });
+
+        const canvas = renderer.domElement;
+        canvas.addEventListener('mousedown', (event) => {
+            isMouseDown = true;
+            mouseX = event.clientX;
+            event.preventDefault();
+        });
+
+        document.addEventListener('mouseup', () => {
+            isMouseDown = false;
+        });
+
+        canvas.addEventListener('mousemove', (event) => {
+            if (isMouseDown) {
+                const deltaX = event.clientX - mouseX;
+                cameraYaw -= deltaX * 0.005;
+                mouseX = event.clientX;
+                event.preventDefault();
+            }
+        });
+
+        // Handle socket events
+        socket.on('currentPlayers', (currentPlayers) => {
+            Object.keys(currentPlayers).forEach(id => {
+                const playerData = currentPlayers[id];
+                if (id === socket.id) {
+                    // Local player
+                    localPlayer = createHumanoidPlayer(true);
+                    localPlayer.position.set(playerData.x, playerData.y, playerData.z);
+                    scene.add(localPlayer);
+                    camera.position.set(playerData.x, 5, playerData.z + 5);
+                    camera.lookAt(localPlayer.position);
+                    health = 100;
+                    healthFill.style.width = '100%';
+                } else {
+                    const playerMesh = createHumanoidPlayer(false);
+                    playerMesh.position.set(playerData.x, playerData.y, playerData.z);
+                    players[id] = playerMesh;
+                    scene.add(playerMesh);
+                }
+            });
+        });
+
+        socket.on('newPlayer', (playerData) => {
+            const playerMesh = createHumanoidPlayer(false);
+            playerMesh.position.set(playerData.x, playerData.y, playerData.z);
+            players[playerData.id] = playerMesh;
+            scene.add(playerMesh);
+        });
+
+        socket.on('playerMoved', (playerData) => {
+            if (players[playerData.id]) {
+                players[playerData.id].position.set(playerData.x, playerData.y, playerData.z);
+            }
+        });
+
+        socket.on('playerDisconnected', (id) => {
+            if (players[id]) {
+                scene.remove(players[id]);
+                delete players[id];
+            }
+        });
+
+        socket.on('playerDamaged', (id, newHealth) => {
+            if (id === socket.id) {
+                health = newHealth;
+                healthFill.style.width = (health / 100) * 100 + '%';
+                if (health <= 0) {
+                    alert('You died! Respawning...');
+                    location.reload();
+                }
+            } else if (players[id]) {
+                // Flash red
+                const body = players[id].children.find(child => child.geometry.type === 'BoxGeometry' && child.position.y === 0.6);
+                if (body) {
+                    body.material.color.setHex(0xff0000);
+                    setTimeout(() => {
+                        body.material.color.setHex(0x228B22);
+                    }, 200);
+                }
+            }
+        });
+
+        // Animation loop
+        let walkTime = 0;
+        let attacking = false;
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (localPlayer) {
+                // Handle local player movement and turning
+                const speed = speedBoost && Date.now() < speedBoostEndTime ? 0.2 : 0.1;
+                const direction = new THREE.Vector3();
+                if (keys['KeyW']) direction.z -= 1;
+                if (keys['KeyS']) direction.z += 1;
+                if (keys['KeyA']) direction.x -= 1;
+                if (keys['KeyD']) direction.x += 1;
+                if (keys['Digit1']) equipWeapon(0);
+                if (keys['Digit2']) equipWeapon(1);
+                if (keys['Digit3']) equipWeapon(2);
+                if (keys['Digit4']) equipWeapon(3);
+                if (keys['Digit5']) equipWeapon(4);
+
+                // Attack
+                if (keys['Space'] && !attacking && localPlayer.userData.weapon) {
+                    attacking = true;
+                    const arm = localPlayer.userData.rightArm;
+                    const weapon = localPlayer.userData.weapon;
+                    arm.rotation.x = -Math.PI / 4;
+                    arm.rotation.z = Math.PI / 4;
+                    // Weapon follows arm rotation
+
+                    // Check hits on players
+                    Object.keys(players).forEach(id => {
+                        const player = players[id];
+                        const distance = localPlayer.position.distanceTo(player.position);
+                        if (distance < 2) {
+                            socket.emit('attack', id, 20);
+                        }
+                    });
+
+                    // Check hits on trees if using axe
+                    if (localPlayer.userData.weapon && localPlayer.userData.weapon.userData.type === 'axe') {
+                        for (let i = trees.length - 1; i >= 0; i--) {
+                            const tree = trees[i];
+                            const distance = localPlayer.position.distanceTo(tree.trunk.position);
+                            if (distance < 3) {  // Increased range for trees since they are taller
+                                tree.hits--;
+                                if (tree.hits <= 0) {
+                                    scene.remove(tree.trunk);
+                                    scene.remove(tree.leaves);
+                                    trees.splice(i, 1);
+                                    wood += 10;
+                                    woodElement.innerHTML = 'Wood: ' + wood;
+                                }
+                            }
+                        }
+                    }
+
+                    setTimeout(() => {
+                        arm.rotation.x = 0;
+                        arm.rotation.z = 0;
+                        attacking = false;
+                    }, 300);
+                }
+
+                direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw);
+                direction.multiplyScalar(speed);
+                const moved = direction.length() > 0;
+                if (moved) {
+                    localPlayer.position.add(direction);
+                }
+
+                // Walking animation
+                if (moved) {
+                    walkTime += 0.15;
+                    localPlayer.userData.leftLeg.rotation.x = Math.sin(walkTime) * 1.0;
+                    localPlayer.userData.rightLeg.rotation.x = Math.sin(walkTime + Math.PI) * 1.0;
+                    localPlayer.userData.leftArm.rotation.x = -Math.sin(walkTime) * 1.0;
+                    localPlayer.userData.rightArm.rotation.x = Math.sin(walkTime) * 1.0;
+                    if (localPlayer.userData.weapon) {
+                        localPlayer.userData.weapon.rotation.x = -Math.PI / 2 - localPlayer.userData.rightArm.rotation.x;
+                    }
+                    localPlayer.userData.walking = true;
+                } else if (localPlayer.userData.walking) {
+                    // Reset limbs when stopped
+                    localPlayer.userData.leftLeg.rotation.x *= 0.9;
+                    localPlayer.userData.rightLeg.rotation.x *= 0.9;
+                    localPlayer.userData.leftArm.rotation.x *= 0.9;
+                    localPlayer.userData.rightArm.rotation.x *= 0.9;
+                    if (localPlayer.userData.weapon) {
+                        localPlayer.userData.weapon.rotation.x = -Math.PI / 2 + (localPlayer.userData.weapon.rotation.x + Math.PI / 2) * 0.9;
+                    }
+                    if (Math.abs(localPlayer.userData.leftLeg.rotation.x) < 0.01) {
+                        localPlayer.userData.walking = false;
+                    }
+                }
+
+                // Update player rotation to face camera direction
+                localPlayer.rotation.y = cameraYaw;
+
+                // Update camera to follow player
+                const offset = new THREE.Vector3(0, 5, 5);
+                offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw);
+                camera.position.copy(localPlayer.position).add(offset);
+                camera.lookAt(localPlayer.position);
+
+                if (moved) {
+                    socket.emit('playerMovement', {
+                        x: localPlayer.position.x,
+                        y: localPlayer.position.y,
+                        z: localPlayer.position.z,
+                        rotation: cameraYaw
+                    });
+                }
+
+                // Check for collectible collisions
+                collectibles.forEach((collectible, index) => {
+                    const distance = localPlayer.position.distanceTo(collectible.position);
+                    if (distance < 1.5) {
+                        scene.remove(collectible);
+                        collectibles.splice(index, 1);
+                        score++;
+                        scoreElement.innerHTML = 'Gold: ' + score;
+                    }
+                });
+
+                // Check for potion collisions
+                potions.forEach((potion, index) => {
+                    const distance = localPlayer.position.distanceTo(potion.position);
+                    if (distance < 1.5) {
+                        scene.remove(potion);
+                        potions.splice(index, 1);
+                        speedBoost = true;
+                        speedBoostEndTime = Date.now() + 10000; // 10 seconds
+                    }
+                });
+
+                // Check for weapon collisions
+                weapons.forEach((weapon, index) => {
+                    if (!weapon.collected) {
+                        const distance = localPlayer.position.distanceTo(weapon.mesh.position);
+                        if (distance < 1.5) {
+                            scene.remove(weapon.mesh);
+                            weapon.collected = true;
+                            inventory.push(weapon.type);
+                            slots[inventory.length - 1].innerHTML = weapon.type;
+                            if (inventory.length === 1) {
+                                equipWeapon(0);
+                            } else if (inventory.length === 2) {
+                                // Add to back
+                                backWeapon = createWeaponMesh(weapon.type);
+                                backWeapon.position.set(0.2, 1.0, -0.4);
+                                backWeapon.rotation.x = Math.PI / 3;  // Diagonal angle
+                                localPlayer.add(backWeapon);
+                            }
+                        }
+                    }
+                });
+            }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
