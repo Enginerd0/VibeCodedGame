@@ -576,8 +576,8 @@
                 group.add(guard);
 
             } else if (type === 'axe') {
-                // Axe head
-                const headGeometry = new THREE.BoxGeometry(0.4, 0.15, 0.5);
+                // Axe head - elongated blade shape
+                const headGeometry = new THREE.BoxGeometry(0.2, 0.15, 0.7); // Thin width, thicker height, long blade
                 const headMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 });
                 const head = new THREE.Mesh(headGeometry, headMaterial);
                 head.position.y = 0.675; // Position to touch the top of the handle
