@@ -166,7 +166,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3008;
+const PORT = process.env.PORT || 3010;
 server.listen(PORT, () => {
   console.log(`Medieval multiplayer game server running on port ${PORT}`);
   console.log(`Open http://localhost:${PORT} in your browser`);

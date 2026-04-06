@@ -190,6 +190,35 @@
             z-index: 2000;
         }
 
+        /* Music Control */
+        .music-control {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #FFD700;
+            border-radius: 8px;
+            padding: 8px 15px;
+            font-size: 14px;
+            color: #FFD700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            pointer-events: auto;
+        }
+
+        .music-control:hover {
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        .music-control.playing::after {
+            content: ' 🔊';
+        }
+
+        .music-control.muted::after {
+            content: ' 🔇';
+        }
+
         /* Instructions */
         .instructions {
             position: absolute;
@@ -242,6 +271,26 @@
     </style>
 </head>
 <body>
+    <!-- Background Music -->
+    <!--
+    To add medieval music:
+    1. Download free medieval/fantasy music from:
+       - YouTube Audio Library (search "medieval fantasy")
+       - Bensound.com (royalty-free music)
+       - Free Music Archive
+       - Zapsplat.com (medieval sounds)
+    2. Save as "medieval-music.mp3" in the public folder
+    3. Or use the placeholder bell sound below for testing
+    -->
+    <audio id="backgroundMusic" loop preload="auto">
+        <!-- Medieval fantasy music from OpenGameArt.org (CC-BY 4.0) -->
+        <source src="https://opengameart.org/sites/default/files/elyvilon_-_nimuehs_gift_-_07_noonday_feast_of_the_jolly_friar.mp3" type="audio/mpeg">
+        <!-- Fallback to local files if you download them -->
+        <source src="medieval-music.mp3" type="audio/mpeg">
+        <source src="medieval-music.ogg" type="audio/ogg">
+        Your browser does not support the audio element.
+    </audio>
+
     <div class="loading">Loading Medieval Game...</div>
 
     <div class="ui-overlay">
@@ -250,6 +299,7 @@
             <div class="health-fill"></div>
             <div class="health-text">100/100 HP</div>
         </div>
+        <div class="music-control" id="musicToggle">Medieval Music</div>
         <div class="toolbar"></div>
         <div class="crosshair"></div>
         <div class="respawn-message">You died! Respawning...</div>
@@ -282,6 +332,7 @@
         let inventory = [];
         let selectedSlot = 0;
         let isAttacking = false;
+        let musicEnabled = true;
 
         // Input handling
         const keys = {};
@@ -306,6 +357,15 @@
 
             // Hide loading screen
             document.querySelector('.loading').style.display = 'none';
+
+            // Start background music
+            const music = document.getElementById('backgroundMusic');
+            music.volume = 0.3; // Set volume to 30%
+            music.play().catch(error => {
+                console.log('Music autoplay failed:', error);
+                // Add a play button for browsers that block autoplay
+                createMusicButton();
+            });
 
             // Start game loop
             animate();
@@ -628,6 +688,7 @@
 
                 // Setup UI
                 setupUI();
+                setupMusicControls();
             });
 
             socket.on('newPlayer', (playerData) => {
@@ -715,6 +776,58 @@
                 toolbar.appendChild(slot);
             }
             updateToolbar();
+        }
+
+        function setupMusicControls() {
+            const musicToggle = document.getElementById('musicToggle');
+            const music = document.getElementById('backgroundMusic');
+
+            musicToggle.addEventListener('click', () => {
+                if (musicEnabled) {
+                    music.pause();
+                    musicEnabled = false;
+                    musicToggle.classList.remove('playing');
+                    musicToggle.classList.add('muted');
+                } else {
+                    music.play().catch(error => {
+                        console.log('Music play failed:', error);
+                    });
+                    musicEnabled = true;
+                    musicToggle.classList.remove('muted');
+                    musicToggle.classList.add('playing');
+                }
+            });
+
+            // Set initial state
+            if (musicEnabled) {
+                musicToggle.classList.add('playing');
+            }
+        }
+
+        function createMusicButton() {
+            const musicButton = document.createElement('button');
+            musicButton.textContent = '🎵 Play Medieval Music';
+            musicButton.style.position = 'fixed';
+            musicButton.style.top = '50%';
+            musicButton.style.left = '50%';
+            musicButton.style.transform = 'translate(-50%, -50%)';
+            musicButton.style.padding = '15px 25px';
+            musicButton.style.fontSize = '18px';
+            musicButton.style.background = '#FFD700';
+            musicButton.style.border = 'none';
+            musicButton.style.borderRadius = '8px';
+            musicButton.style.cursor = 'pointer';
+            musicButton.style.zIndex = '3000';
+
+            musicButton.addEventListener('click', () => {
+                const music = document.getElementById('backgroundMusic');
+                music.play();
+                document.body.removeChild(musicButton);
+                musicEnabled = true;
+                document.getElementById('musicToggle').classList.add('playing');
+            });
+
+            document.body.appendChild(musicButton);
         }
 
         function selectToolbarSlot(index) {
