@@ -338,6 +338,7 @@
         const keys = {};
         let mouseX = 0;
         let cameraYaw = 0;
+        let cameraPitch = 0;
         let isMouseDown = false;
 
         // Initialize game
@@ -425,27 +426,72 @@
         }
 
         function createCastle() {
-            // Castle base
-            const castleGeometry = new THREE.BoxGeometry(20, 12, 20);
             const castleMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
-            const castle = new THREE.Mesh(castleGeometry, castleMaterial);
-            castle.position.set(0, 6, -30);
-            castle.castShadow = true;
-            scene.add(castle);
-
-            // Castle towers
-            const towerGeometry = new THREE.CylinderGeometry(2, 2, 16, 8);
             const towerMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 });
+            const wallHeight = 8;
+            const wallThickness = 1;
+            const castleSize = 30;
 
-            const tower1 = new THREE.Mesh(towerGeometry, towerMaterial);
-            tower1.position.set(-8, 8, -30);
-            tower1.castShadow = true;
-            scene.add(tower1);
+            // Outer walls with gate in north
+            // North wall left
+            const northWallLeft = new THREE.Mesh(new THREE.BoxGeometry(10, wallHeight, wallThickness), castleMaterial);
+            northWallLeft.position.set(-10, wallHeight/2, -castleSize/2);
+            northWallLeft.castShadow = true;
+            scene.add(northWallLeft);
 
-            const tower2 = new THREE.Mesh(towerGeometry, towerMaterial);
-            tower2.position.set(8, 8, -30);
-            tower2.castShadow = true;
-            scene.add(tower2);
+            // North wall right
+            const northWallRight = new THREE.Mesh(new THREE.BoxGeometry(10, wallHeight, wallThickness), castleMaterial);
+            northWallRight.position.set(10, wallHeight/2, -castleSize/2);
+            northWallRight.castShadow = true;
+            scene.add(northWallRight);
+
+            // South wall
+            const southWall = new THREE.Mesh(new THREE.BoxGeometry(castleSize, wallHeight, wallThickness), castleMaterial);
+            southWall.position.set(0, wallHeight/2, castleSize/2);
+            southWall.castShadow = true;
+            scene.add(southWall);
+
+            // East wall
+            const eastWall = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, wallHeight, castleSize), castleMaterial);
+            eastWall.position.set(castleSize/2, wallHeight/2, 0);
+            eastWall.castShadow = true;
+            scene.add(eastWall);
+
+            // West wall
+            const westWall = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, wallHeight, castleSize), castleMaterial);
+            westWall.position.set(-castleSize/2, wallHeight/2, 0);
+            westWall.castShadow = true;
+            scene.add(westWall);
+
+            // Central keep
+            const keepGeometry = new THREE.BoxGeometry(8, 12, 8);
+            const keep = new THREE.Mesh(keepGeometry, castleMaterial);
+            keep.position.set(0, 6, 0);
+            keep.castShadow = true;
+            scene.add(keep);
+
+            // Corner towers
+            const towerGeometry = new THREE.CylinderGeometry(2, 2, 16, 8);
+
+            const towerNW = new THREE.Mesh(towerGeometry, towerMaterial);
+            towerNW.position.set(-12, 8, -12);
+            towerNW.castShadow = true;
+            scene.add(towerNW);
+
+            const towerNE = new THREE.Mesh(towerGeometry, towerMaterial);
+            towerNE.position.set(12, 8, -12);
+            towerNE.castShadow = true;
+            scene.add(towerNE);
+
+            const towerSW = new THREE.Mesh(towerGeometry, towerMaterial);
+            towerSW.position.set(-12, 8, 12);
+            towerSW.castShadow = true;
+            scene.add(towerSW);
+
+            const towerSE = new THREE.Mesh(towerGeometry, towerMaterial);
+            towerSE.position.set(12, 8, 12);
+            towerSE.castShadow = true;
+            scene.add(towerSE);
         }
 
         function createTrees() {
@@ -635,6 +681,13 @@
 
             // Prevent context menu
             document.addEventListener('contextmenu', (event) => {
+                event.preventDefault();
+            });
+
+            // Handle mouse wheel for camera pitch
+            document.addEventListener('wheel', (event) => {
+                cameraPitch += event.deltaY * 0.001;
+                cameraPitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, cameraPitch));
                 event.preventDefault();
             });
 
@@ -982,6 +1035,7 @@
 
                 // Update camera to follow player
                 const cameraOffset = new THREE.Vector3(0, 6, 8);
+                cameraOffset.applyAxisAngle(new THREE.Vector3(1, 0, 0), cameraPitch);
                 cameraOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw);
                 camera.position.copy(localPlayer.position).add(cameraOffset);
                 camera.lookAt(localPlayer.position);
