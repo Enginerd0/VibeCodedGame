@@ -425,6 +425,32 @@
             console.log('Three.js setup complete');
         }
 
+        // Castle walls for collision detection (client-side)
+        const walls = [
+            // North wall left: x -15 to -5, z -15.5 to -14.5
+            { minX: -15, maxX: -5, minZ: -15.5, maxZ: -14.5 },
+            // North wall right: x 5 to 15, z -15.5 to -14.5
+            { minX: 5, maxX: 15, minZ: -15.5, maxZ: -14.5 },
+            // South wall: x -15 to 15, z 14.5 to 15.5
+            { minX: -15, maxX: 15, minZ: 14.5, maxZ: 15.5 },
+            // East wall: x 14.5 to 15.5, z -15 to 15
+            { minX: 14.5, maxX: 15.5, minZ: -15, maxZ: 15 },
+            // West wall: x -15.5 to -14.5, z -15 to 15
+            { minX: -15.5, maxX: -14.5, minZ: -15, maxZ: 15 },
+            // Central keep: x -4 to 4, z -4 to 4
+            { minX: -4, maxX: 4, minZ: -4, maxZ: 4 }
+        ];
+
+        // Function to check collision with walls
+        function checkCollision(x, z) {
+            for (const wall of walls) {
+                if (x >= wall.minX && x <= wall.maxX && z >= wall.minZ && z <= wall.maxZ) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         function createCastle() {
             const castleMaterial = new THREE.MeshLambertMaterial({ color: 0x808080 }); // Grey walls
             const towerMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 });
@@ -705,7 +731,7 @@
 
                 // Create local player
                 localPlayer = createPlayerMesh(true);
-                localPlayer.position.set(0, 0, 0);
+                localPlayer.position.set(data.players[data.yourId].x, data.players[data.yourId].y, data.players[data.yourId].z);
                 scene.add(localPlayer);
 
                 // Create other players
@@ -980,7 +1006,12 @@
                     direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw);
                     direction.multiplyScalar(speed);
 
-                    localPlayer.position.add(direction);
+                    // Check collision before moving
+                    const newX = localPlayer.position.x + direction.x;
+                    const newZ = localPlayer.position.z + direction.z;
+                    if (!checkCollision(newX, newZ)) {
+                        localPlayer.position.add(direction);
+                    }
 
                     // Walking animation
                     localPlayer.userData.walkTime += 0.2;
