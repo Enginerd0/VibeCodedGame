@@ -437,6 +437,7 @@
 
             // Medieval structures
             createCastle();
+            createRoad();
             createTrees();
 
             console.log('Three.js setup complete');
@@ -566,6 +567,56 @@
                 leaves.castShadow = true;
                 scene.add(leaves);
             }
+        }
+
+        function createRoad() {
+            const roadMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 }); // Brown like dirt road
+
+            // Road segments around the map, starting from castle gate
+            // Segment 1: From gate (0,-15) north to (0,-100)
+            const seg1Geometry = new THREE.BoxGeometry(10, 0.1, 85); // Width 10, height 0.1, length 85
+            const seg1 = new THREE.Mesh(seg1Geometry, roadMaterial);
+            seg1.position.set(0, 0.05, -57.5); // y=0.05 to be above ground, z center between -15 and -100
+            scene.add(seg1);
+
+            // Segment 2: From (0,-100) west to (-100,-100)
+            const seg2Geometry = new THREE.BoxGeometry(100, 0.1, 10); // Length 100, width 10
+            const seg2 = new THREE.Mesh(seg2Geometry, roadMaterial);
+            seg2.position.set(-50, 0.05, -100); // x center -50, z -100
+            scene.add(seg2);
+
+            // Segment 3: From (-100,-100) north to (-100,100)
+            const seg3Geometry = new THREE.BoxGeometry(10, 0.1, 200); // Width 10, length 200
+            const seg3 = new THREE.Mesh(seg3Geometry, roadMaterial);
+            seg3.position.set(-100, 0.05, 0); // x -100, z 0
+            scene.add(seg3);
+
+            // Segment 4: From (-100,100) east to (100,100)
+            const seg4Geometry = new THREE.BoxGeometry(200, 0.1, 10); // Length 200, width 10
+            const seg4 = new THREE.Mesh(seg4Geometry, roadMaterial);
+            seg4.position.set(0, 0.05, 100); // x 0, z 100
+            scene.add(seg4);
+
+            // Segment 5: From (100,100) south to (100,0)
+            const seg5Geometry = new THREE.BoxGeometry(10, 0.1, 100); // Width 10, length 100
+            const seg5 = new THREE.Mesh(seg5Geometry, roadMaterial);
+            seg5.position.set(100, 0.05, 50); // x 100, z 50
+            scene.add(seg5);
+
+            // Segment 6: From (100,0) west to (0,-15) - but to close the loop, adjust
+            // Actually, from (100,0) to (0,-15), but since gate is at -15, make a diagonal or straight
+            // For simplicity, from (100,0) to (50,-15), then to (0,-15)
+            // But to keep simple, extend the road back
+            const seg6Geometry = new THREE.BoxGeometry(100, 0.1, 10); // From 100 to 0 at z=0, then to z=-15
+            const seg6 = new THREE.Mesh(seg6Geometry, roadMaterial);
+            seg6.position.set(50, 0.05, 0); // x 50, z 0
+            scene.add(seg6);
+
+            // Final segment to gate
+            const seg7Geometry = new THREE.BoxGeometry(10, 0.1, 15); // From x=0 to 0, z=0 to -15
+            const seg7 = new THREE.Mesh(seg7Geometry, roadMaterial);
+            seg7.position.set(0, 0.05, -7.5); // z -7.5
+            scene.add(seg7);
         }
 
         function createPlayerMesh(isLocal = false) {
