@@ -233,6 +233,20 @@
             line-height: 1.4;
         }
 
+        /* Coordinate Display */
+        #coordinateDisplay {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #FFD700;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 14px;
+            color: #FFD700;
+            display: none;
+        }
+
         .instructions h3 {
             color: #FFD700;
             margin-bottom: 10px;
@@ -308,12 +322,14 @@
             <ul>
                 <li><strong>WASD</strong> - Move</li>
                 <li><strong>Mouse</strong> - Look around</li>
-                <li><strong>Left Click</strong> - Attack (with weapon)</li>
+                <li><strong>Left Click</strong> - Attack (with fist or weapon)</li>
                 <li><strong>1-5</strong> - Select toolbar slot</li>
+                <li><strong>C</strong> - Toggle coordinate display</li>
                 <li><strong>Walk near gold</strong> - Collect coins</li>
                 <li><strong>Walk near weapons</strong> - Pick up items</li>
             </ul>
         </div>
+        <div id="coordinateDisplay">Coordinates: X: 0, Y: 0, Z: 0</div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -340,6 +356,7 @@
         let cameraYaw = 0;
         let cameraPitch = 0;
         let isMouseDown = false;
+        let showCoordinates = false;
 
         // Initialize game
         function init() {
@@ -675,6 +692,13 @@
                 // Number keys for toolbar
                 if (event.code >= 'Digit1' && event.code <= 'Digit5') {
                     selectToolbarSlot(parseInt(event.code.slice(-1)) - 1);
+                }
+
+                // Toggle coordinate display
+                if (event.code === 'KeyC') {
+                    showCoordinates = !showCoordinates;
+                    const coordDisplay = document.getElementById('coordinateDisplay');
+                    coordDisplay.style.display = showCoordinates ? 'block' : 'none';
                 }
             });
 
@@ -1096,6 +1120,12 @@
                         socket.emit('pickupWeapon', weapon.userData.id);
                     }
                 });
+            }
+
+            // Update coordinate display if enabled
+            if (showCoordinates && localPlayer) {
+                const coordDisplay = document.getElementById('coordinateDisplay');
+                coordDisplay.textContent = `Coordinates: X: ${localPlayer.position.x.toFixed(2)}, Y: ${localPlayer.position.y.toFixed(2)}, Z: ${localPlayer.position.z.toFixed(2)}`;
             }
 
             renderer.render(scene, camera);
