@@ -526,6 +526,90 @@
             keep.castShadow = true;
             scene.add(keep);
 
+            // Lord NPC at the gate
+            const lordGroup = new THREE.Group();
+            lordGroup.position.set(0, 0, -17); // Outside the north gate
+
+            // Body (robe)
+            const lordBodyGeometry = new THREE.BoxGeometry(0.8, 1.4, 0.4);
+            const lordBodyMaterial = new THREE.MeshLambertMaterial({ color: 0x800080 }); // Purple robe
+            const lordBody = new THREE.Mesh(lordBodyGeometry, lordBodyMaterial);
+            lordBody.position.y = 1.3;
+            lordBody.castShadow = true;
+            lordGroup.add(lordBody);
+
+            // Head
+            const lordHeadGeometry = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+            const lordHeadMaterial = new THREE.MeshLambertMaterial({ color: 0xf5deb3 });
+            const lordHead = new THREE.Mesh(lordHeadGeometry, lordHeadMaterial);
+            lordHead.position.y = 2.2;
+            lordHead.castShadow = true;
+            lordGroup.add(lordHead);
+
+            // Crown - base ring
+            const crownBaseGeometry = new THREE.TorusGeometry(0.35, 0.05, 8, 16);
+            const crownMaterial = new THREE.MeshLambertMaterial({ color: 0xFFD700 }); // Gold
+            const crownBase = new THREE.Mesh(crownBaseGeometry, crownMaterial);
+            crownBase.position.y = 2.5;
+            crownBase.rotation.x = Math.PI / 2; // Lay flat on head
+            lordGroup.add(crownBase);
+
+            // Crown spikes
+            const spikeGeometry = new THREE.BoxGeometry(0.05, 0.2, 0.05);
+            for (let i = 0; i < 5; i++) {
+                const spike = new THREE.Mesh(spikeGeometry, crownMaterial);
+                const angle = (i / 5) * Math.PI * 2;
+                spike.position.set(Math.cos(angle) * 0.35, 2.6, Math.sin(angle) * 0.35);
+                lordGroup.add(spike);
+            }
+
+            // Eyes
+            const lordEyeGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+            const lordEyeMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+            const lordLeftEye = new THREE.Mesh(lordEyeGeometry, lordEyeMaterial);
+            lordLeftEye.position.set(-0.1, 2.3, -0.31);
+            lordGroup.add(lordLeftEye);
+            const lordRightEye = new THREE.Mesh(lordEyeGeometry, lordEyeMaterial);
+            lordRightEye.position.set(0.1, 2.3, -0.31);
+            lordGroup.add(lordRightEye);
+
+            // Mouth
+            const lordMouthGeometry = new THREE.BoxGeometry(0.1, 0.02, 0.01);
+            const lordMouthMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+            const lordMouth = new THREE.Mesh(lordMouthGeometry, lordMouthMaterial);
+            lordMouth.position.set(0, 2.1, -0.31);
+            lordGroup.add(lordMouth);
+
+            // Arms
+            const lordArmGeometry = new THREE.BoxGeometry(0.4, 0.8, 0.4);
+            const lordArmMaterial = new THREE.MeshLambertMaterial({ color: 0xf5deb3 });
+
+            const lordLeftArm = new THREE.Mesh(lordArmGeometry, lordArmMaterial);
+            lordLeftArm.position.set(-0.6, 1.5, 0);
+            lordLeftArm.castShadow = true;
+            lordGroup.add(lordLeftArm);
+
+            const lordRightArm = new THREE.Mesh(lordArmGeometry, lordArmMaterial);
+            lordRightArm.position.set(0.6, 1.5, 0);
+            lordRightArm.castShadow = true;
+            lordGroup.add(lordRightArm);
+
+            // Legs
+            const lordLegGeometry = new THREE.BoxGeometry(0.4, 1.2, 0.4);
+            const lordLegMaterial = new THREE.MeshLambertMaterial({ color: 0x000080 });
+
+            const lordLeftLeg = new THREE.Mesh(lordLegGeometry, lordLegMaterial);
+            lordLeftLeg.position.set(-0.2, 0, 0);
+            lordLeftLeg.castShadow = true;
+            lordGroup.add(lordLeftLeg);
+
+            const lordRightLeg = new THREE.Mesh(lordLegGeometry, lordLegMaterial);
+            lordRightLeg.position.set(0.2, 0, 0);
+            lordRightLeg.castShadow = true;
+            lordGroup.add(lordRightLeg);
+
+            scene.add(lordGroup);
+
             // Corner towers
             const towerGeometry = new THREE.CylinderGeometry(2, 2, 16, 8);
 
