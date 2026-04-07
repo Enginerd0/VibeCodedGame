@@ -544,17 +544,25 @@
             const leavesMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
 
             for (let i = 0; i < 20; i++) {
+                let x, z;
+                let placed = false;
+                for (let tries = 0; tries < 100; tries++) {
+                    x = Math.random() * 100 - 50;
+                    z = Math.random() * 100 - 50;
+                    if (!checkCollision(x, z)) {
+                        placed = true;
+                        break;
+                    }
+                }
+                if (!placed) continue; // Skip if couldn't place after max tries
+
                 const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
-                trunk.position.set(
-                    Math.random() * 100 - 50,
-                    3,
-                    Math.random() * 100 - 50
-                );
+                trunk.position.set(x, 3, z);
                 trunk.castShadow = true;
                 scene.add(trunk);
 
                 const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
-                leaves.position.set(trunk.position.x, trunk.position.y + 5, trunk.position.z);
+                leaves.position.set(x, 8, z);
                 leaves.castShadow = true;
                 scene.add(leaves);
             }
