@@ -381,8 +381,7 @@
             music.volume = 0.3; // Set volume to 30%
             music.play().catch(error => {
                 console.log('Music autoplay failed:', error);
-                // Add a play button for browsers that block autoplay
-                createMusicButton();
+                // Music will be started via the toggle button if needed
             });
 
             // Start game loop
@@ -645,7 +644,7 @@
                 color: isLocal ? 0x8B4513 : Math.random() * 0xffffff
             });
             const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-            body.position.y = 0.7;
+            body.position.y = 1.3;
             body.castShadow = true;
             group.add(body);
 
@@ -653,21 +652,38 @@
             const headGeometry = new THREE.BoxGeometry(0.6, 0.6, 0.6);
             const headMaterial = new THREE.MeshLambertMaterial({ color: 0xf5deb3 });
             const head = new THREE.Mesh(headGeometry, headMaterial);
-            head.position.y = 1.6;
+            head.position.y = 2.2;
             head.castShadow = true;
             group.add(head);
+
+            // Eyes
+            const eyeGeometry = new THREE.SphereGeometry(0.05, 8, 8);
+            const eyeMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+            const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            leftEye.position.set(-0.1, 2.3, -0.31);
+            group.add(leftEye);
+            const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            rightEye.position.set(0.1, 2.3, -0.31);
+            group.add(rightEye);
+
+            // Mouth
+            const mouthGeometry = new THREE.BoxGeometry(0.1, 0.02, 0.01);
+            const mouthMaterial = new THREE.MeshLambertMaterial({ color: 0x000000 });
+            const mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
+            mouth.position.set(0, 2.1, -0.31);
+            group.add(mouth);
 
             // Arms
             const armGeometry = new THREE.BoxGeometry(0.4, 0.8, 0.4);
             const armMaterial = new THREE.MeshLambertMaterial({ color: 0xf5deb3 });
 
             const leftArm = new THREE.Mesh(armGeometry, armMaterial);
-            leftArm.position.set(-0.6, 0.9, 0);
+            leftArm.position.set(-0.6, 1.5, 0);
             leftArm.castShadow = true;
             group.add(leftArm);
 
             const rightArm = new THREE.Mesh(armGeometry, armMaterial);
-            rightArm.position.set(0.6, 0.9, 0);
+            rightArm.position.set(0.6, 1.5, 0);
             rightArm.castShadow = true;
             group.add(rightArm);
 
@@ -676,12 +692,12 @@
             const legMaterial = new THREE.MeshLambertMaterial({ color: 0x000080 });
 
             const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
-            leftLeg.position.set(-0.2, -0.6, 0);
+            leftLeg.position.set(-0.2, 0, 0);
             leftLeg.castShadow = true;
             group.add(leftLeg);
 
             const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
-            rightLeg.position.set(0.2, -0.6, 0);
+            rightLeg.position.set(0.2, 0, 0);
             rightLeg.castShadow = true;
             group.add(rightLeg);
 
