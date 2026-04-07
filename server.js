@@ -171,10 +171,11 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle attacks
+  // Handle attacks (fist or weapon)
   socket.on('attack', (targetId) => {
-    if (players[socket.id] && players[targetId] && players[socket.id].equippedWeapon) {
-      players[targetId].health -= 20;
+    if (players[socket.id] && players[targetId]) {
+      const damage = players[socket.id].equippedWeapon ? 20 : 5; // Weapons do 20, fists do 5
+      players[targetId].health -= damage;
       if (players[targetId].health < 0) players[targetId].health = 0;
 
       io.emit('playerAttacked', {
@@ -185,9 +186,10 @@ io.on('connection', (socket) => {
 
       // Handle player death and respawn
       if (players[targetId].health <= 0) {
-        players[targetId].x = Math.random() * 10 - 5;
+        // Respawn at fixed location outside castle
+        players[targetId].x = 20;
         players[targetId].y = 0;
-        players[targetId].z = Math.random() * 10 - 5;
+        players[targetId].z = 0;
         players[targetId].health = 100;
 
         io.emit('playerRespawned', {

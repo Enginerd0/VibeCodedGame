@@ -1036,8 +1036,8 @@
                     }
                 }
 
-                // Handle attacking
-                if (isMouseDown && inventory[selectedSlot] && !isAttacking) {
+                // Handle attacking (with or without weapon)
+                if (isMouseDown && !isAttacking) {
                     isAttacking = true;
 
                     // Attack animation
