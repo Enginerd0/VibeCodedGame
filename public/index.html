@@ -471,6 +471,11 @@
             return false;
         }
 
+        // Function to check if point is inside castle bounds
+        function isInsideCastle(x, z) {
+            return x >= -15 && x <= 15 && z >= -15 && z <= 15;
+        }
+
         // Function to check collision with roads
         function checkRoadCollision(x, z) {
             for (const road of roads) {
@@ -646,7 +651,7 @@
                 for (let tries = 0; tries < 100; tries++) {
                     x = Math.random() * 100 - 50;
                     z = Math.random() * 100 - 50;
-                    if (!checkCollision(x, z) && !checkRoadCollision(x, z)) {
+                    if (!checkCollision(x, z) && !checkRoadCollision(x, z) && !isInsideCastle(x, z)) {
                         placed = true;
                         break;
                     }

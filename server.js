@@ -46,13 +46,18 @@ function checkCollision(x, z) {
   return false;
 }
 
+// Function to check if point is inside castle bounds
+function isInsideCastle(x, z) {
+  return x >= -15 && x <= 15 && z >= -15 && z <= 15;
+}
+
 // Initialize collectibles (gold coins)
 for (let i = 0; i < 20; i++) {
   let x, z;
   do {
     x = Math.random() * 40 - 20;
     z = Math.random() * 40 - 20;
-  } while (checkCollision(x, z));
+  } while (checkCollision(x, z) || isInsideCastle(x, z));
   collectibles.push({
     id: i,
     x: x,
@@ -68,7 +73,7 @@ for (let i = 0; i < 10; i++) {
   do {
     x = Math.random() * 40 - 20;
     z = Math.random() * 40 - 20;
-  } while (checkCollision(x, z));
+  } while (checkCollision(x, z) || isInsideCastle(x, z));
   weapons.push({
     id: i,
     x: x,
