@@ -766,7 +766,7 @@
             // Scene
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x87CEEB);
-            scene.fog = new THREE.Fog(0x87CEEB, 50, 200);
+            scene.fog = new THREE.Fog(0x87CEEB, 50, 300);
 
             // Camera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -797,7 +797,7 @@
             scene.add(directionalLight);
 
             // Ground
-            const groundGeometry = new THREE.PlaneGeometry(200, 200);
+            const groundGeometry = new THREE.PlaneGeometry(400, 400);
             const groundMaterial = new THREE.MeshLambertMaterial({
                 map: createGrassTexture()
             });
@@ -1242,12 +1242,12 @@
             const leavesGeometry = new THREE.SphereGeometry(3, 32, 16); // Much higher resolution: 32 width, 16 height segments
             const leavesMaterial = new THREE.MeshLambertMaterial({ map: createLeafTexture() });
 
-            for (let i = 0; i < 100; i++) { // Increased from 20 to 100 trees
+            for (let i = 0; i < 200; i++) { // Increased from 100 to 200 trees
                 let x, z;
                 let placed = false;
                 for (let tries = 0; tries < 100; tries++) {
-                    x = Math.random() * 100 - 50;
-                    z = Math.random() * 100 - 50;
+                    x = Math.random() * 350 - 175; // Expanded range to cover larger map
+                    z = Math.random() * 350 - 175;
                     if (!checkCollision(x, z) && !checkRoadCollision(x, z) && !isInsideCastle(x, z) && !checkTreeCollision(x, z)) {
                         placed = true;
                         break;
@@ -1292,12 +1292,12 @@
             const roadMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 }); // Brown like dirt road
 
             // Road segments around the map, starting from castle gate
-            // Segment 1: From gate (0,-15) north to (0,-100)
-            const seg1Geometry = new THREE.BoxGeometry(10, 0.1, 85); // Width 10, height 0.1, length 85
+            // Segment 1: From gate (0,-15) north to (0,-200)
+            const seg1Geometry = new THREE.BoxGeometry(10, 0.1, 185); // Width 10, height 0.1, length 185
             const seg1 = new THREE.Mesh(seg1Geometry, roadMaterial);
-            seg1.position.set(0, 0.05, -57.5); // y=0.05 to be above ground, z center between -15 and -100
+            seg1.position.set(0, 0.05, -107.5); // y=0.05 to be above ground, z center between -15 and -200
             scene.add(seg1);
-            roads.push({ minX: -5, maxX: 5, minZ: -100, maxZ: -15 }); // Approximate bounds
+            roads.push({ minX: -5, maxX: 5, minZ: -200, maxZ: -15 }); // Approximate bounds
 
             // Segment 2: From (0,-100) west to (-100,-100)
             const seg2Geometry = new THREE.BoxGeometry(100, 0.1, 10); // Length 100, width 10
