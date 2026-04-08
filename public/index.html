@@ -921,9 +921,62 @@
                 return texture;
             }
 
+            // Create wood texture for roofs
+            function createWoodTexture() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 256;
+                const ctx = canvas.getContext('2d');
+
+                // Base wood color
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(0, 0, 256, 256);
+
+                // Add wood grain lines
+                ctx.strokeStyle = '#654321';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < 50; i++) {
+                    const y = Math.random() * 256;
+                    ctx.beginPath();
+                    ctx.moveTo(0, y);
+                    ctx.lineTo(256, y + Math.random() * 20 - 10);
+                    ctx.stroke();
+                }
+
+                // Add knots
+                ctx.fillStyle = '#654321';
+                for (let i = 0; i < 20; i++) {
+                    const x = Math.random() * 256;
+                    const y = Math.random() * 256;
+                    const radius = Math.random() * 3 + 2;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Add lighter highlights
+                ctx.fillStyle = '#DAA520';
+                for (let i = 0; i < 100; i++) {
+                    const x = Math.random() * 256;
+                    const y = Math.random() * 256;
+                    const size = Math.random() * 2;
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                texture.repeat.set(2, 2);
+                return texture;
+            }
+
             const brickTexture = createBrickTexture();
+            const woodTexture = createWoodTexture();
             const castleMaterial = new THREE.MeshLambertMaterial({ map: brickTexture });
             const towerMaterial = new THREE.MeshLambertMaterial({ map: brickTexture });
+            const roofMaterial = new THREE.MeshLambertMaterial({ map: woodTexture });
             const wallHeight = 8;
             const wallThickness = 1;
             const castleSize = 30;
@@ -965,6 +1018,14 @@
             keep.position.set(0, 6, 0);
             keep.castShadow = true;
             scene.add(keep);
+
+            // Keep roof (pyramid shape)
+            const keepRoofGeometry = new THREE.ConeGeometry(5, 4, 4);
+            const keepRoof = new THREE.Mesh(keepRoofGeometry, roofMaterial);
+            keepRoof.position.set(0, 12, 0);
+            keepRoof.rotation.y = Math.PI / 4; // Rotate 45 degrees
+            keepRoof.castShadow = true;
+            scene.add(keepRoof);
 
             // Lord NPC at the gate
             const lordGroup = new THREE.Group();
@@ -1140,20 +1201,44 @@
             towerNW.castShadow = true;
             scene.add(towerNW);
 
+            const towerNWRoofGeometry = new THREE.ConeGeometry(2.5, 3, 8);
+            const towerNWRoof = new THREE.Mesh(towerNWRoofGeometry, roofMaterial);
+            towerNWRoof.position.set(-12, 16, -12);
+            towerNWRoof.castShadow = true;
+            scene.add(towerNWRoof);
+
             const towerNE = new THREE.Mesh(towerGeometry, towerMaterial);
             towerNE.position.set(12, 8, -12);
             towerNE.castShadow = true;
             scene.add(towerNE);
+
+            const towerNERoofGeometry = new THREE.ConeGeometry(2.5, 3, 8);
+            const towerNERoof = new THREE.Mesh(towerNERoofGeometry, roofMaterial);
+            towerNERoof.position.set(12, 16, -12);
+            towerNERoof.castShadow = true;
+            scene.add(towerNERoof);
 
             const towerSW = new THREE.Mesh(towerGeometry, towerMaterial);
             towerSW.position.set(-12, 8, 12);
             towerSW.castShadow = true;
             scene.add(towerSW);
 
+            const towerSWRoofGeometry = new THREE.ConeGeometry(2.5, 3, 8);
+            const towerSWRoof = new THREE.Mesh(towerSWRoofGeometry, roofMaterial);
+            towerSWRoof.position.set(-12, 16, 12);
+            towerSWRoof.castShadow = true;
+            scene.add(towerSWRoof);
+
             const towerSE = new THREE.Mesh(towerGeometry, towerMaterial);
             towerSE.position.set(12, 8, 12);
             towerSE.castShadow = true;
             scene.add(towerSE);
+
+            const towerSERoofGeometry = new THREE.ConeGeometry(2.5, 3, 8);
+            const towerSERoof = new THREE.Mesh(towerSERoofGeometry, roofMaterial);
+            towerSERoof.position.set(12, 16, 12);
+            towerSERoof.castShadow = true;
+            scene.add(towerSERoof);
         }
 
         function createTrees() {
