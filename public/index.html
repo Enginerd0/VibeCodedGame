@@ -693,6 +693,76 @@
         }
 
         function setupThreeJS() {
+            // Create grass texture
+            function createGrassTexture() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+
+                // Base grass color
+                ctx.fillStyle = '#228B22';
+                ctx.fillRect(0, 0, 512, 512);
+
+                // Add grass blade patterns
+                ctx.fillStyle = '#32CD32'; // Lighter green for blades
+                for (let i = 0; i < 2000; i++) {
+                    const x = Math.random() * 512;
+                    const y = Math.random() * 512;
+                    const length = Math.random() * 4 + 2;
+                    const angle = Math.random() * Math.PI;
+
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(angle);
+                    ctx.fillRect(0, 0, 1, length);
+                    ctx.restore();
+                }
+
+                // Add darker patches for variation
+                for (let i = 0; i < 100; i++) {
+                    const x = Math.random() * 512;
+                    const y = Math.random() * 512;
+                    const radius = Math.random() * 20 + 5;
+                    const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+                    gradient.addColorStop(0, 'rgba(34, 139, 34, 0.8)');
+                    gradient.addColorStop(1, 'rgba(34, 139, 34, 0)');
+
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(x, y, radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Add lighter highlights
+                ctx.fillStyle = '#90EE90'; // Light green
+                for (let i = 0; i < 500; i++) {
+                    const x = Math.random() * 512;
+                    const y = Math.random() * 512;
+                    const size = Math.random() * 2;
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Add some dirt patches
+                ctx.fillStyle = '#8B4513';
+                for (let i = 0; i < 50; i++) {
+                    const x = Math.random() * 512;
+                    const y = Math.random() * 512;
+                    const size = Math.random() * 3 + 1;
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                texture.repeat.set(4, 4); // Repeat pattern
+                return texture;
+            }
+
             // Scene
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x87CEEB);
@@ -729,9 +799,7 @@
             // Ground
             const groundGeometry = new THREE.PlaneGeometry(200, 200);
             const groundMaterial = new THREE.MeshLambertMaterial({
-                color: 0x228B22,
-                transparent: true,
-                opacity: 0.8
+                map: createGrassTexture()
             });
             const ground = new THREE.Mesh(groundGeometry, groundMaterial);
             ground.rotation.x = -Math.PI / 2;
