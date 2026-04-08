@@ -92,6 +92,7 @@ io.on('connection', (socket) => {
 
   players[socket.id] = {
     id: socket.id,
+    username: 'Unknown', // Will be set by setUsername event
     x: x,
     y: 0,
     z: z,
@@ -108,6 +109,14 @@ io.on('connection', (socket) => {
     collectibles,
     weapons,
     yourId: socket.id
+  });
+
+  // Handle username setting
+  socket.on('setUsername', (username) => {
+    if (players[socket.id]) {
+      players[socket.id].username = username;
+      console.log(`Player ${socket.id} set username to: ${username}`);
+    }
   });
 
   // Notify other players
