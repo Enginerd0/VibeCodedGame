@@ -461,6 +461,9 @@
         // Road segments for collision detection
         const roads = [];
 
+        // Trees for collision detection
+        const trees = [];
+
         // Function to check collision with walls
         function checkCollision(x, z) {
             for (const wall of walls) {
@@ -480,6 +483,17 @@
         function checkRoadCollision(x, z) {
             for (const road of roads) {
                 if (x >= road.minX && x <= road.maxX && z >= road.minZ && z <= road.maxZ) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Function to check collision with trees
+        function checkTreeCollision(x, z) {
+            for (const tree of trees) {
+                const distance = Math.sqrt((x - tree.x) ** 2 + (z - tree.z) ** 2);
+                if (distance < tree.radius) {
                     return true;
                 }
             }
@@ -780,7 +794,7 @@
                 for (let tries = 0; tries < 100; tries++) {
                     x = Math.random() * 100 - 50;
                     z = Math.random() * 100 - 50;
-                    if (!checkCollision(x, z) && !checkRoadCollision(x, z) && !isInsideCastle(x, z)) {
+                    if (!checkCollision(x, z) && !checkRoadCollision(x, z) && !isInsideCastle(x, z) && !checkTreeCollision(x, z)) {
                         placed = true;
                         break;
                     }
@@ -810,6 +824,13 @@
                 leaves.position.set(x, leavesY, z);
                 leaves.castShadow = true;
                 scene.add(leaves);
+
+                // Add tree to collision detection array
+                trees.push({
+                    x: x,
+                    z: z,
+                    radius: 0.8 * trunkScale + 0.3 // Trunk radius plus small buffer for leaves
+                });
             }
         }
 
@@ -1357,7 +1378,7 @@
                     // Check collision before moving
                     const newX = localPlayer.position.x + direction.x;
                     const newZ = localPlayer.position.z + direction.z;
-                    if (!checkCollision(newX, newZ)) {
+                    if (!checkCollision(newX, newZ) && !checkTreeCollision(newX, newZ)) {
                         localPlayer.position.add(direction);
                     }
 
