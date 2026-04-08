@@ -487,8 +487,57 @@
         }
 
         function createCastle() {
-            const castleMaterial = new THREE.MeshLambertMaterial({ color: 0x808080 }); // Grey walls
-            const towerMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 });
+            // Create stone brick texture
+            function createBrickTexture() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 256;
+                const ctx = canvas.getContext('2d');
+
+                // Base stone color
+                ctx.fillStyle = '#808080';
+                ctx.fillRect(0, 0, 256, 256);
+
+                // Add brick pattern
+                ctx.fillStyle = '#696969'; // Darker stone for bricks
+                const brickWidth = 64;
+                const brickHeight = 32;
+                const mortarThickness = 2;
+
+                for (let y = 0; y < 256; y += brickHeight + mortarThickness) {
+                    for (let x = 0; x < 256; x += brickWidth + mortarThickness) {
+                        // Offset every other row for brick pattern
+                        const offsetX = (y / (brickHeight + mortarThickness)) % 2 === 0 ? 0 : brickWidth / 2;
+
+                        ctx.fillRect(x + offsetX, y, brickWidth, brickHeight);
+
+                        // Add some variation to brick colors
+                        const variation = Math.random() * 0.2 - 0.1;
+                        ctx.fillStyle = `hsl(${120 + variation * 60}, 10%, ${50 + variation * 20}%)`;
+                        ctx.fillRect(x + offsetX + mortarThickness, y + mortarThickness, brickWidth - mortarThickness * 2, brickHeight - mortarThickness * 2);
+                        ctx.fillStyle = '#696969'; // Reset to base dark color
+                    }
+                }
+
+                // Add some noise for stone texture
+                for (let i = 0; i < 1000; i++) {
+                    const x = Math.random() * 256;
+                    const y = Math.random() * 256;
+                    const size = Math.random() * 2;
+                    ctx.fillStyle = `rgba(${Math.random() * 50}, ${Math.random() * 50}, ${Math.random() * 50}, 0.3)`;
+                    ctx.fillRect(x, y, size, size);
+                }
+
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                texture.repeat.set(2, 4); // Repeat pattern
+                return texture;
+            }
+
+            const brickTexture = createBrickTexture();
+            const castleMaterial = new THREE.MeshLambertMaterial({ map: brickTexture });
+            const towerMaterial = new THREE.MeshLambertMaterial({ map: brickTexture });
             const wallHeight = 8;
             const wallThickness = 1;
             const castleSize = 30;
