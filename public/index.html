@@ -1082,7 +1082,8 @@
             // Handle mouse wheel for camera pitch
             document.addEventListener('wheel', (event) => {
                 cameraPitch += event.deltaY * 0.001;
-                cameraPitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, cameraPitch));
+                // Allow full upward movement but restrict downward to prevent seeing below ground
+                cameraPitch = Math.max(-0.1, Math.min(Math.PI / 2 - 0.1, cameraPitch));
                 event.preventDefault();
             });
 
@@ -1438,6 +1439,12 @@
                 cameraOffset.applyAxisAngle(new THREE.Vector3(1, 0, 0), cameraPitch);
                 cameraOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), cameraYaw);
                 camera.position.copy(localPlayer.position).add(cameraOffset);
+
+                // Prevent camera from going below ground level
+                if (camera.position.y < 1) {
+                    camera.position.y = 1;
+                }
+
                 camera.lookAt(localPlayer.position);
 
                 // Send position updates
