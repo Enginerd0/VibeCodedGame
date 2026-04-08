@@ -1022,7 +1022,7 @@
             // Keep roof (pyramid shape)
             const keepRoofGeometry = new THREE.ConeGeometry(5, 4, 4);
             const keepRoof = new THREE.Mesh(keepRoofGeometry, roofMaterial);
-            keepRoof.position.set(0, 12, 0);
+            keepRoof.position.set(0, 14, 0);
             keepRoof.rotation.y = Math.PI / 4; // Rotate 45 degrees
             keepRoof.castShadow = true;
             scene.add(keepRoof);
@@ -1203,7 +1203,7 @@
 
             const towerNWRoofGeometry = new THREE.ConeGeometry(2.5, 3, 8);
             const towerNWRoof = new THREE.Mesh(towerNWRoofGeometry, roofMaterial);
-            towerNWRoof.position.set(-12, 16, -12);
+            towerNWRoof.position.set(-12, 17.5, -12);
             towerNWRoof.castShadow = true;
             scene.add(towerNWRoof);
 
@@ -1214,7 +1214,7 @@
 
             const towerNERoofGeometry = new THREE.ConeGeometry(2.5, 3, 8);
             const towerNERoof = new THREE.Mesh(towerNERoofGeometry, roofMaterial);
-            towerNERoof.position.set(12, 16, -12);
+            towerNERoof.position.set(12, 17.5, -12);
             towerNERoof.castShadow = true;
             scene.add(towerNERoof);
 
@@ -1225,7 +1225,7 @@
 
             const towerSWRoofGeometry = new THREE.ConeGeometry(2.5, 3, 8);
             const towerSWRoof = new THREE.Mesh(towerSWRoofGeometry, roofMaterial);
-            towerSWRoof.position.set(-12, 16, 12);
+            towerSWRoof.position.set(-12, 17.5, 12);
             towerSWRoof.castShadow = true;
             scene.add(towerSWRoof);
 
@@ -1236,7 +1236,7 @@
 
             const towerSERoofGeometry = new THREE.ConeGeometry(2.5, 3, 8);
             const towerSERoof = new THREE.Mesh(towerSERoofGeometry, roofMaterial);
-            towerSERoof.position.set(12, 16, 12);
+            towerSERoof.position.set(12, 17.5, 12);
             towerSERoof.castShadow = true;
             scene.add(towerSERoof);
         }
