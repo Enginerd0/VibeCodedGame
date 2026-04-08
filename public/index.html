@@ -598,9 +598,50 @@
             const lordGroup = new THREE.Group();
             lordGroup.position.set(0, 0, -17); // Outside the north gate
 
-            // Body (robe)
+            // Body (tunic with gold accents)
+            function createTunicTexture() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 256;
+                const ctx = canvas.getContext('2d');
+
+                // Base purple fabric
+                ctx.fillStyle = '#800080';
+                ctx.fillRect(0, 0, 256, 256);
+
+                // Gold trim along edges
+                ctx.fillStyle = '#FFD700';
+                ctx.fillRect(0, 0, 256, 8); // Top trim
+                ctx.fillRect(0, 248, 256, 8); // Bottom trim
+                ctx.fillRect(0, 0, 8, 256); // Left trim
+                ctx.fillRect(248, 0, 8, 256); // Right trim
+
+                // Gold embroidery pattern
+                ctx.fillStyle = '#FFD700';
+                for (let i = 0; i < 10; i++) {
+                    const x = 20 + i * 22;
+                    const y = 20 + i * 22;
+                    ctx.fillRect(x, y, 4, 20); // Vertical gold lines
+                    ctx.fillRect(x, y, 20, 4); // Horizontal gold lines
+                }
+
+                // Add some texture variation
+                for (let i = 0; i < 200; i++) {
+                    const x = Math.random() * 256;
+                    const y = Math.random() * 256;
+                    if (x < 8 || x > 248 || y < 8 || y > 248) continue; // Don't overwrite trim
+                    ctx.fillStyle = `rgba(${128 + Math.random() * 32}, 0, ${128 + Math.random() * 32}, 0.3)`;
+                    ctx.fillRect(x, y, 2, 2);
+                }
+
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                return texture;
+            }
+
             const lordBodyGeometry = new THREE.BoxGeometry(0.8, 1.4, 0.4);
-            const lordBodyMaterial = new THREE.MeshLambertMaterial({ color: 0x800080 }); // Purple robe
+            const lordBodyMaterial = new THREE.MeshLambertMaterial({ map: createTunicTexture() });
             const lordBody = new THREE.Mesh(lordBodyGeometry, lordBodyMaterial);
             lordBody.position.y = 1.3;
             lordBody.castShadow = true;
@@ -648,19 +689,60 @@
             lordMouth.position.set(0, 2.1, -0.31);
             lordGroup.add(lordMouth);
 
-            // Arms
-            const lordArmGeometry = new THREE.BoxGeometry(0.4, 0.8, 0.4);
-            const lordArmMaterial = new THREE.MeshLambertMaterial({ color: 0xf5deb3 });
+            // Arms with sleeves
+            function createSleeveTexture() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 128;
+                canvas.height = 128;
+                const ctx = canvas.getContext('2d');
 
-            const lordLeftArm = new THREE.Mesh(lordArmGeometry, lordArmMaterial);
-            lordLeftArm.position.set(-0.6, 1.5, 0);
-            lordLeftArm.castShadow = true;
-            lordGroup.add(lordLeftArm);
+                // Base fabric color (lighter purple than tunic)
+                ctx.fillStyle = '#A052A0';
+                ctx.fillRect(0, 0, 128, 128);
 
-            const lordRightArm = new THREE.Mesh(lordArmGeometry, lordArmMaterial);
-            lordRightArm.position.set(0.6, 1.5, 0);
-            lordRightArm.castShadow = true;
-            lordGroup.add(lordRightArm);
+                // Gold cuff at bottom
+                ctx.fillStyle = '#FFD700';
+                ctx.fillRect(0, 120, 128, 8);
+
+                // Subtle gold threading
+                ctx.fillStyle = '#FFD700';
+                for (let i = 0; i < 5; i++) {
+                    ctx.fillRect(10 + i * 20, 10, 2, 108);
+                }
+
+                const texture = new THREE.CanvasTexture(canvas);
+                texture.wrapS = THREE.RepeatWrapping;
+                texture.wrapT = THREE.RepeatWrapping;
+                return texture;
+            }
+
+            // Upper arms (sleeves from tunic)
+            const lordSleeveGeometry = new THREE.BoxGeometry(0.4, 0.6, 0.4);
+            const lordSleeveMaterial = new THREE.MeshLambertMaterial({ map: createSleeveTexture() });
+
+            const lordLeftSleeve = new THREE.Mesh(lordSleeveGeometry, lordSleeveMaterial);
+            lordLeftSleeve.position.set(-0.6, 1.7, 0);
+            lordLeftSleeve.castShadow = true;
+            lordGroup.add(lordLeftSleeve);
+
+            const lordRightSleeve = new THREE.Mesh(lordSleeveGeometry, lordSleeveMaterial);
+            lordRightSleeve.position.set(0.6, 1.7, 0);
+            lordRightSleeve.castShadow = true;
+            lordGroup.add(lordRightSleeve);
+
+            // Forearms (exposed skin)
+            const lordForearmGeometry = new THREE.BoxGeometry(0.35, 0.5, 0.35);
+            const lordForearmMaterial = new THREE.MeshLambertMaterial({ color: 0xf5deb3 });
+
+            const lordLeftForearm = new THREE.Mesh(lordForearmGeometry, lordForearmMaterial);
+            lordLeftForearm.position.set(-0.6, 1.15, 0);
+            lordLeftForearm.castShadow = true;
+            lordGroup.add(lordLeftForearm);
+
+            const lordRightForearm = new THREE.Mesh(lordForearmGeometry, lordForearmMaterial);
+            lordRightForearm.position.set(0.6, 1.15, 0);
+            lordRightForearm.castShadow = true;
+            lordGroup.add(lordRightForearm);
 
             // Legs
             const lordLegGeometry = new THREE.BoxGeometry(0.4, 1.2, 0.4);
