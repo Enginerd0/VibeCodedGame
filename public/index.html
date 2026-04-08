@@ -586,6 +586,7 @@
                 <li><strong>Left Click</strong> - Attack (with fist or weapon)</li>
                 <li><strong>1-5</strong> - Select toolbar slot</li>
                 <li><strong>C</strong> - Toggle coordinate display</li>
+                <li><strong>H</strong> - Toggle controls display</li>
                 <li><strong>Walk near gold</strong> - Collect coins</li>
                 <li><strong>Walk near weapons</strong> - Pick up items</li>
             </ul>
@@ -1473,6 +1474,13 @@
                     showCoordinates = !showCoordinates;
                     const coordDisplay = document.getElementById('coordinateDisplay');
                     coordDisplay.style.display = showCoordinates ? 'block' : 'none';
+                }
+
+                // Toggle controls/instructions display
+                if (event.code === 'KeyH') {
+                    const instructions = document.querySelector('.instructions');
+                    const currentDisplay = getComputedStyle(instructions).display;
+                    instructions.style.display = currentDisplay === 'none' ? 'block' : 'none';
                 }
             });
 
